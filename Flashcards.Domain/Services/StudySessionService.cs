@@ -18,7 +18,7 @@ public class StudySessionService : IStudySessionService
         _logger = logger;
     }
 
-    public async Task<Result> CreateStudySessionAsync(int stackId, DateTime date, int score, CancellationToken cancellationToken = default)
+    public async Task<Result> CreateStudySessionAsync(int stackId, DateTime date, int totalQuestions, int score, CancellationToken cancellationToken = default)
     {
         if (stackId <= 0)
             return Result.Fail("Stack ids must be greater than 0");
@@ -26,12 +26,15 @@ public class StudySessionService : IStudySessionService
         if (date == DateTime.MinValue)
             return Result.Fail("Date is invalid");
 
+        if (totalQuestions < 0)
+            return Result.Fail("Number of questions must be a positive integer");
+
         if (score < 0)
             return Result.Fail("Score must be a positive integer");
 
         try
         {
-            var session = new StudySession(stackId, date, score);
+            var session = new StudySession(stackId, date, totalQuestions, score);
             var created = await _sessionRepo.AddSessionAsync(session, cancellationToken).ConfigureAwait(false);
 
             return created ? Result.Ok() : Result.Fail($"Session with stack id = {stackId} unable to be created");

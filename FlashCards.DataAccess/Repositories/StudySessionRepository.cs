@@ -25,10 +25,10 @@ public class StudySessionRepository : IStudySessionRepository
 
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-        var insertQuery = @"INSERT INTO dbo.StudySessions (StackId, Date, Score) VALUES (@StackId, @Date, @Score)";
+        var insertQuery = @"INSERT INTO dbo.StudySessions (StackId, Date, TotalQuestions, Score) VALUES (@StackId, @Date, @TotalQuestions, @Score)";
 
         var command = new CommandDefinition(insertQuery,
-            new { studySession.StackId, studySession.Date, studySession.Score }, cancellationToken: cancellationToken);
+            new { studySession.StackId, studySession.Date, studySession.TotalQuestions, studySession.Score }, cancellationToken: cancellationToken);
 
         return await connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
     }
@@ -42,9 +42,9 @@ public class StudySessionRepository : IStudySessionRepository
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
         var retrievalQuery =
-            @"SELECT Id, StackId, Date, Score FROM dbo.StudySessions WHERE StackId = @StackId";
+            @"SELECT Id, StackId, Date, TotalQuestions, Score FROM dbo.StudySessions WHERE StackId = @StackId";
 
-        var command = new CommandDefinition(retrievalQuery, cancellationToken: cancellationToken);
+        var command = new CommandDefinition(retrievalQuery, new { StackId = stackId }, cancellationToken: cancellationToken);
 
         return (await connection.QueryAsync<StudySession>(command).ConfigureAwait(false))
             .AsList()
@@ -58,7 +58,7 @@ public class StudySessionRepository : IStudySessionRepository
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
         var retrievalQuery =
-            @"SELECT Id, StackId, Date, Score FROM dbo.StudySessions";
+            @"SELECT Id, StackId, Date, TotalQuestions, Score FROM dbo.StudySessions";
 
         var command = new CommandDefinition(retrievalQuery, cancellationToken: cancellationToken);
 

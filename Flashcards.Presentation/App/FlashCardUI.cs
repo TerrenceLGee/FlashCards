@@ -1,4 +1,6 @@
 ﻿using Flashcards.Domain.Interfaces;
+using Flashcards.Presentation.Operations;
+using Flashcards.Presentation.Operations.Helpers;
 using Flashcards.Presentation.Options;
 using Flashcards.Presentation.Options.Extensions;
 using Spectre.Console;
@@ -27,40 +29,222 @@ public class FlashCardUI
     public async Task Run()
     {
         bool isRunning = true;
+        
+        DisplayUIOperations display =
+            new DisplayUIOperations(_stackService, _flashcardService, _studySessionService, _token);
+        StackUIOperations stackUI = new StackUIOperations(_stackService, _token);
+        FlashcardUIOperations flashcardUI = new FlashcardUIOperations(_flashcardService, _token);
+        StudySessionUIOperations sessionUI = new StudySessionUIOperations(_studySessionService, _token);
 
         while (isRunning)
         {
             switch (ShowMainMenu())
             {
                 case MainMenuOption.ManageStacks:
-                    await HandleStackMenu();
+                    await HandleStackMenu(stackUI, display);
                     break;
                 case MainMenuOption.ManageFlashcards:
-                    await HandleFlashcardMenu();
+                    await HandleFlashcardMenu(flashcardUI, display);
                     break;
                 case MainMenuOption.Study:
-                    await HandleStudySessionMenu();
+                    await HandleStudySessionMenu(sessionUI, display);
                     break;
                 case MainMenuOption.Exit:
                     isRunning = false;
                     break;
+                default: UIOperationHelper.DisplayMessage("Invalid input");
+                    break;
             }
+            UIOperationHelper.ClearTheScreen();
         }
     }
 
-    private async Task HandleStackMenu()
+    private async Task HandleStackMenu(StackUIOperations stackUI, DisplayUIOperations display)
     {
-        
+        bool isRunning = true;
+
+        while (isRunning)
+        {
+            switch (ShowStackMenu())
+            {
+                case StackMenuOption.CreateStack:
+                    await stackUI.CreateStackAsync(_token);
+                    break;
+
+                case StackMenuOption.RenameStack:
+                    await display.DisplayAllStacksAsync();
+
+                    int renameId = UIOperationHelper.GetValidNumber(
+                        "Please enter the id for the stack that you wish to rename: ");
+
+                    if (!await InvalidStackIdMessage(renameId))
+                        break;
+
+                    await stackUI.RenameStackAsync(renameId, _token);
+                    break;
+                case StackMenuOption.DeleteStack:
+                    await display.DisplayAllStacksAsync();
+
+                    int deleteId =
+                        UIOperationHelper.GetValidNumber(
+                            "Please enter the id for the stack that you wish to deleted: ");
+
+                    if (!await InvalidStackIdMessage(deleteId))
+                        break;
+
+                    await stackUI.DeleteStackAsync(deleteId, _token);
+                    break;
+                case StackMenuOption.ListAllStacks:
+                    await display.DisplayAllStacksAsync();
+                    break;
+                case StackMenuOption.Back:
+                    isRunning = false;
+                    break;
+                default: UIOperationHelper.DisplayMessage("Invalid input");
+                    break;
+            }
+            UIOperationHelper.ClearTheScreen();
+        }
     }
 
-    private async Task HandleFlashcardMenu()
+    private async Task HandleFlashcardMenu(FlashcardUIOperations flashcardUI, DisplayUIOperations display)
     {
-        
+        bool isRunning = true;
+
+        int stackId;
+        int flashcardId;
+
+        while (isRunning)
+        {
+            switch (ShowFlashcardMenu())
+            {
+                case FlashcardMenuOption.AddFlashcard:
+                    await display.DisplayAllStacksAsync();
+
+                    stackId =
+                        UIOperationHelper.GetValidNumber(
+                            "Please choose the id of the stack that you wish to create a flash card for: ");
+
+                    if (!await InvalidStackIdMessage(stackId))
+                        break;
+
+                    await flashcardUI.AddFlashCard(stackId, _token);
+
+                    break;
+                case FlashcardMenuOption.EditFlashcard:
+                    await display.DisplayAllStacksAsync();
+                    stackId =
+                        UIOperationHelper.GetValidNumber(
+                            "Please choose the id of the stack that you wish to edit a flashcard in: ");
+
+                    if (!await InvalidStackIdMessage(stackId))
+                        break;
+
+
+                    await display.DisplayAllFlashcardsAsync(stackId);
+                    flashcardId =
+                        UIOperationHelper.GetValidNumber(
+                            "Please choose the id of the flashcard that you wish to edit: ");
+
+                    if (!await IsValidFlashcardId(flashcardId))
+                        break;
+
+                    await flashcardUI.UpdateFlashCardAsync(flashcardId, stackId, _token);
+
+                    break;
+                case FlashcardMenuOption.DeleteFlashcard:
+                    await display.DisplayAllFlashcardsAsync();
+
+                    flashcardId =
+                        UIOperationHelper.GetValidNumber("Please enter the id of the flashcard you wish to delete");
+
+                    if (!await IsValidFlashcardId(flashcardId))
+                        break;
+
+                    await flashcardUI.DeleteFlashcardAsync(flashcardId, _token);
+
+                    break;
+                case FlashcardMenuOption.DeleteFlashcardByStackId:
+                    await display.DisplayAllStacksAsync();
+
+                    stackId =
+                        UIOperationHelper.GetValidNumber(
+                            "Please choose the id of the stack that you wish to delete a flashcard in: ");
+
+                    if (!await InvalidStackIdMessage(stackId))
+                        break;
+
+                    await display.DisplayAllFlashcardsAsync(stackId);
+
+                    flashcardId =
+                        UIOperationHelper.GetValidNumber(
+                            "Please choose the id of the flashcard that you wish to delete: ");
+
+                    if (!await IsValidFlashcardId(flashcardId))
+                        break;
+
+
+                    await flashcardUI.DeleteFlashcardByStackIdAsync(flashcardId, stackId, _token);
+
+                    break;
+                case FlashcardMenuOption.ListAllFlashcards:
+                    await display.DisplayAllStacksAsync();
+                    stackId =
+                        UIOperationHelper.GetValidNumber(
+                            "Please choose the stack id that you wish to see flashcards for: ");
+
+                    if (!await InvalidStackIdMessage(stackId))
+                        break;
+
+                    await display.DisplayAllFlashcardsAsync(stackId);
+                    break;
+                case FlashcardMenuOption.Back:
+                    isRunning = false;
+                    break;
+                default: UIOperationHelper.DisplayMessage("Invalid input");
+                    break;
+            }
+            UIOperationHelper.ClearTheScreen();
+        }
     }
 
-    private async Task HandleStudySessionMenu()
+    private async Task HandleStudySessionMenu(StudySessionUIOperations sessionUI, DisplayUIOperations display)
     {
-        
+        bool isRunning = true;
+        int stackId;
+
+        while (isRunning)
+        {
+            switch (ShowStudyMenu())
+            {
+                case StudyMenuOption.StartStudySession:
+                    await display.DisplayAllStacksAsync();
+                    stackId = UIOperationHelper.GetValidNumber("Please enter the stack id for which you would like to create a study session for ");
+
+                    if (!await InvalidStackIdMessage(stackId))
+                        break;
+
+                    break;
+                case StudyMenuOption.ViewAllStudySessions:
+                    await display.DisplayAllStudySessionsAsync();
+                    break;
+                case StudyMenuOption.ViewStudySessionByStackId:
+                    await display.DisplayAllStacksAsync();
+                    stackId =
+                        UIOperationHelper.GetValidNumber(
+                            "Please choose the stack id that you wish to see study sessions for: ");
+                    if (!await InvalidStackIdMessage(stackId))
+                        break;
+                    await display.DisplayAllStudySessionsByStackAsync(stackId);
+                    break;
+                case StudyMenuOption.Back:
+                    isRunning = false;
+                    break;
+                default: UIOperationHelper.DisplayMessage("Invalid input");
+                    break;
+            }
+            UIOperationHelper.ClearTheScreen();
+        }
     }
 
     private static MainMenuOption ShowMainMenu()
@@ -98,5 +282,69 @@ public class FlashCardUI
                 .AddChoices(Enum.GetValues<StudyMenuOption>())
                 .UseConverter(choice => choice.GetDisplayName()));
     }
+
+    private async Task<bool> IsValidStackId(int stackId)
+    {
+        var getStacks = await _stackService.GetAllStacksAsync(_token);
+
+        if (!getStacks.IsSuccess)
+        {
+            UIOperationHelper.WriteResult(getStacks);
+        }
+
+        var stacks = getStacks.Value;
+
+        if (stacks is not null)
+        {
+            return stacks.Any(stack => stack.Id == stackId);
+        }
+
+        return false;
+    }
+
+    private async Task<bool> IsValidFlashcardId(int flashcardId)
+    {
+        var getFlashcards = await _flashcardService.GetAllFlashcardsAsync(_token);
+
+        if (!getFlashcards.IsSuccess)
+        {
+            UIOperationHelper.WriteResult(getFlashcards);
+        }
+
+        var flashcards = getFlashcards.Value;
+
+        if (flashcards is not null)
+        {
+            return flashcards.Any(flashcard => flashcard.Id == flashcardId);
+        }
+        return false;
+    }
     
+
+    private async Task<bool> InvalidStackIdMessage(int stackId)
+    {
+        var validStackId = await IsValidStackId(stackId);
+
+        if (!validStackId)
+        {
+            UIOperationHelper.DisplayMessage($"Invalid stack id there are no stacks with id = {stackId}");
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<bool> InvalidFlashcardIdMessage(int flashcardId)
+    {
+        var validFlashcardId = await IsValidFlashcardId(flashcardId);
+
+
+        if (!validFlashcardId)
+        {
+            UIOperationHelper.DisplayMessage($"There are no flashcards with id = {flashcardId}");
+            return false;
+        }
+
+        return true;
+    }
 }

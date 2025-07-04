@@ -25,7 +25,7 @@ public class DisplayUIOperations
     
     public async Task DisplayAllStacksAsync()
     {
-        var getStacks = await _stackService.GetAllStacksAsync(_token);
+        var getStacks = await _stackService.GetAllStacksAsync(_token).ConfigureAwait(false);
 
         if (!getStacks.IsSuccess)
         {
@@ -37,7 +37,7 @@ public class DisplayUIOperations
 
         if (allStacks?.Count == 0)
         {
-            AnsiConsole.MarkupLine($"[red]No stacks are currently available for display[/]");
+            UIOperationHelper.DisplayMessage("No stacks are currently available for display");
             return;
         }
 
@@ -45,8 +45,7 @@ public class DisplayUIOperations
         table.AddColumn("Id");
         table.AddColumn("Name");
 
-        AnsiConsole.MarkupLine("[underline green]Stacks[/]");
-        
+        UIOperationHelper.DisplayMessage("Stacks", "underline green");
         foreach (var stack in allStacks!)
         {
             table.AddRow(
@@ -59,7 +58,7 @@ public class DisplayUIOperations
 
     public async Task DisplayAllFlashcardsAsync(int stackId)
     {
-        var getFlashcards = await _flashcardService.GetFlashcardsByStackIdAsync(stackId, _token);
+        var getFlashcards = await _flashcardService.GetFlashcardsByStackIdAsync(stackId, _token).ConfigureAwait(false);
 
         if (!getFlashcards.IsSuccess)
         {
@@ -71,7 +70,7 @@ public class DisplayUIOperations
 
         if (allFlashcards?.Count == 0)
         {
-            AnsiConsole.MarkupLine($"[red]No flashcards are currently available for display with stack id = {stackId}[/]");
+            UIOperationHelper.DisplayMessage($"No flashcards are currently available for display with stack id = {stackId}");
             return;
         }
 
@@ -80,12 +79,48 @@ public class DisplayUIOperations
         table.AddColumn("Front");
         table.AddColumn("Back");
 
-        var stackName = GetStackNameById(stackId);
+        var stackName = await GetFlashcardStackNameById(stackId);
 
         if (stackName is not null)
         {
-            AnsiConsole.MarkupLine($"[green underline]Flash cards in {stackName}[/]");
+            UIOperationHelper.DisplayMessage($"Flash cards in {stackName}", "underline green");
         }
+
+        foreach (var flashcard in allFlashcards!)
+        {
+            table.AddRow(
+                flashcard.Position.ToString(),
+                flashcard.Front,
+                flashcard.Back);
+        }
+
+        AnsiConsole.Write(table);
+    }
+
+    public async Task DisplayAllFlashcardsAsync()
+    {
+        var getFlashcards = await _flashcardService.GetAllFlashcardsAsync(_token).ConfigureAwait(false);
+
+        if (!getFlashcards.IsSuccess)
+        {
+            UIOperationHelper.WriteResult(getFlashcards);
+            return;
+        }
+
+        var allFlashcards = getFlashcards.Value;
+
+        if (allFlashcards?.Count == 0)
+        {
+            UIOperationHelper.DisplayMessage("There are current no flashcards belonging to any stack available");
+            return;
+        }
+
+        var table = new Table();
+        table.AddColumn("Id");
+        table.AddColumn("Front");
+        table.AddColumn("Back");
+        
+        UIOperationHelper.DisplayMessage("Flashcards","underline green");
 
         foreach (var flashcard in allFlashcards!)
         {
@@ -100,7 +135,7 @@ public class DisplayUIOperations
 
     public async Task DisplayAllStudySessionsByStackAsync(int stackId)
     {
-        var getStudySessions = await _studySessionService.GetStudySessionsByStackAsync(stackId, _token);
+        var getStudySessions = await _studySessionService.GetStudySessionsByStackAsync(stackId, _token).ConfigureAwait(false);
 
         if (!getStudySessions.IsSuccess)
         {
@@ -109,14 +144,20 @@ public class DisplayUIOperations
         }
 
         var allStudySessionsForStack = getStudySessions.Value;
+
+        if (allStudySessionsForStack?.Count == 0)
+        {
+            UIOperationHelper.DisplayMessage($"There are no study sessions available for stack with id = {stackId}");
+            return;
+        }
         
         var table = new Table();
         table.AddColumn("Id");
         table.AddColumn("Date");
         table.AddColumn("Score");
 
-        var stackName = await GetStackNameById(stackId);
-        AnsiConsole.MarkupLine($"[underline green]Study session for {stackName} stack[/]");
+        var stackName = await GetFlashcardStackNameById(stackId);
+        UIOperationHelper.DisplayMessage($"Study session for {stackName} stack", "underline green");
 
         foreach (var session in allStudySessionsForStack!)
         {
@@ -131,7 +172,7 @@ public class DisplayUIOperations
 
     public async Task DisplayAllStudySessionsAsync()
     {
-        var getStudySessions = await _studySessionService.GetAllStudySessions(_token);
+        var getStudySessions = await _studySessionService.GetAllStudySessions(_token).ConfigureAwait(false);
 
         if (!getStudySessions.IsSuccess)
         {
@@ -142,7 +183,15 @@ public class DisplayUIOperations
         var allStudySessions = getStudySessions.Value;
 
         var orderedSessions = allStudySessions!
-            .OrderBy(session => session.StackId);
+            .OrderBy(session => session.StackId)
+            .ToList()
+            .AsReadOnly();
+
+        if (orderedSessions?.Count == 0)
+        {
+            UIOperationHelper.DisplayMessage("There are no study sessions available to display");
+            return;
+        }
 
         var table = new Table();
         table.AddColumn("Id");
@@ -150,11 +199,11 @@ public class DisplayUIOperations
         table.AddColumn("Stack");
         table.AddColumn("Score");
 
-        AnsiConsole.MarkupLine("[green underline]Study Sessions[/]");
+        UIOperationHelper.DisplayMessage("Study Sessions", "underline green");
 
-        foreach (var session in orderedSessions)
+        foreach (var session in orderedSessions!)
         {
-            string? stackName = await GetStackNameById(session.StackId);
+            string? stackName = await GetFlashcardStackNameById(session.StackId);
             
             table.AddRow(
                 session.Id.ToString(),
@@ -166,9 +215,9 @@ public class DisplayUIOperations
         AnsiConsole.Write(table);
     }
 
-    private async Task<String?> GetStackNameById(int stackId)
+    private async Task<String?> GetFlashcardStackNameById(int stackId)
     {
-        var getStacks = await _stackService.GetAllStacksAsync(_token);
+        var getStacks = await _stackService.GetAllStacksAsync(_token).ConfigureAwait(false);
 
         if (!getStacks.IsSuccess)
         {
@@ -177,11 +226,11 @@ public class DisplayUIOperations
         }
 
         var allStacks = getStacks.Value;
-
-        return allStacks!
+        var stackName = allStacks!
             .Where(stack => stack.Id == stackId)
             .Select(stack => stack.Name)
             .FirstOrDefault();
+        return stackName;
 
     }
 }

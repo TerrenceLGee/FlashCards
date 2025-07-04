@@ -55,42 +55,46 @@ public class FlashcardService : IFlashcardService
         }
     }
 
-    public async Task<Result> UpdateFlashcardAsync(int stackId, string front, string back,
+    public async Task<Result> UpdateFlashcardAsync(int id, int stackId, string front="", string back="",
         CancellationToken cancellationToken = default)
     {
+        if (id <= 0)
+            return Result.Fail("Flashcard id must be greater than 0");
+        
         if (stackId <= 0)
             return Result.Fail("Stack id must be greater than 0");
-
-        if (string.IsNullOrWhiteSpace(front))
-            return Result.Fail("Flashcard front must not be blank");
-
-        if (string.IsNullOrEmpty(back))
-            return Result.Fail("Flash card back must not be blank");
 
         try
         {
             var flashCardToUpdate = await _flashcardRepo.GetFlashcardByIdAsync(stackId, cancellationToken).ConfigureAwait(false);
 
             if (flashCardToUpdate is null)
-                return Result.Fail($"There is no flash card with stack id = {stackId}");
+                return Result.Fail($"There is no flash card with id = {id} that is in stack with stack id = {stackId}");
 
-            flashCardToUpdate.Front = front;
-            flashCardToUpdate.Back = back;
+            if (!string.IsNullOrWhiteSpace(front))
+            {
+                flashCardToUpdate.Front = front;
+            }
+
+            if (!string.IsNullOrWhiteSpace(back))
+            {
+                flashCardToUpdate.Back = back;
+            }
 
             var updated = await _flashcardRepo.UpdateFlashcardAsync(flashCardToUpdate, cancellationToken).ConfigureAwait(false);
 
-            return updated ? Result.Ok() : Result.Fail($"Unable to update flashcard with stack id = {stackId}");
+            return updated ? Result.Ok() : Result.Fail($"Unable to update flashcard with id = {id} in stack with stack id = {stackId}");
         }
         catch (SqlException ex)
         {
-            _logger.LogError(ex, "Database error unable to update flashcard with stack id {StackId}", stackId);
-            return Result.Fail($"Unable to updated flashcard with stack id = {stackId}, database error");
+            _logger.LogError(ex, "Database error unable to update flashcard with id = {id} in stack with stack id {StackId}", id, stackId);
+            return Result.Fail($"Unable to updated flashcard id = {id} in stack with stack id = {stackId}, database error");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "A serious error occurred in the attempt to update flashcard with stack id = {StackId}", stackId);
-            return Result.Fail($"Unable to update flashcard with stack id = {stackId}, a serious error has occurred");
+                "A serious error occurred in the attempt to update flashcard with id = {id} in stack with stack id = {StackId}", id, stackId);
+            return Result.Fail($"Unable to update flashcard with id = {id} in stack with stack id = {stackId}, a serious error has occurred");
         }
     }
 
@@ -113,8 +117,35 @@ public class FlashcardService : IFlashcardService
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "A serious error occurred in the attempt to update flashcard with id = {id}", id);
-            return Result.Fail($"Unable to update flashcard with id = {id}, a serious error has occurred");
+                "A serious error occurred in the attempt to delete flashcard with id = {id}", id);
+            return Result.Fail($"Unable to delete flashcard with id = {id}, a serious error has occurred");
+        }
+    }
+
+    public async Task<Result> DeleteFlashcardByStackIdAsync(int id, int stackId, CancellationToken cancellationToken)
+    {
+        if (id <= 0)
+            return Result.Fail("Flashcard id must be greater than 0");
+
+        if (stackId <= 0)
+            return Result.Fail("Flashcard's stack id must be greater than 0");
+
+        try
+        {
+            var deleted = await _flashcardRepo.DeleteFlashcardByStackIdASync(id, stackId, cancellationToken);
+
+            return deleted ? Result.Ok() : Result.Fail($"Unable to deleted flashcard with id = {id} and stack id = {stackId}");
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogError(ex, "Database error unable to delete flashcard with id = {id} and stack id = {StackId}", id, stackId);
+            return Result.Fail($"Unable to delete flashcard with id = {id} and stack id = {stackId}, database error");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "A serious error occurred in the attempt to delete flashcard with id = {id} and stack id = {StackId}", id, stackId);
+            return Result.Fail($"Unable to delete flashcard with id = {id} and stack id = {stackId}, a serious error has occurred");
         }
     }
 
@@ -174,7 +205,33 @@ public async Task<Result<IReadOnlyList<FlashcardDto>>> GetFlashcardsByStackIdAsy
     }
 }
 
-    public async Task<Result<int>> GetNextFlashcardPositionAsync(int stackId, CancellationToken cancellationToken = default)
+public async Task<Result<IReadOnlyList<FlashcardDto>>> GetAllFlashcardsAsync(CancellationToken cancellationToken = default)
+{
+    try
+    {
+        var list = await _flashcardRepo.GetAllFlashcardsAsync(cancellationToken).ConfigureAwait(false);
+
+        var allFlashcards = list
+            .Select(flashcard => new FlashcardDto(flashcard.Id, flashcard.Front, flashcard.Back, flashcard.Position))
+            .AsList()
+            .AsReadOnly();
+
+        return Result<IReadOnlyList<FlashcardDto>>.Ok(allFlashcards);
+    }
+    catch (SqlException ex)
+    {
+        _logger.LogCritical(ex, "Database error unable to retrieve flashcards");
+        return Result<IReadOnlyList<FlashcardDto>>.Fail($"Unable to retrieve flashcards from the database");
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex,
+            "A serious error occurred in the attempt to retrieve flashcards");
+        return Result<IReadOnlyList<FlashcardDto>>.Fail($"Unable to retrieve flashcards a serious error has occurred");
+    }
+}
+
+public async Task<Result<int>> GetNextFlashcardPositionAsync(int stackId, CancellationToken cancellationToken = default)
     {
         if (stackId <= 0)
             return Result<int>.Fail("Stack ids must be greater than 0");

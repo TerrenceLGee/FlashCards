@@ -4,6 +4,7 @@ using FlashCards.DataAccess.Interfaces;
 using FlashCards.DataAccess.Repositories;
 using Flashcards.Domain.Interfaces;
 using Flashcards.Domain.Services;
+using Flashcards.Presentation.App;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -62,6 +63,17 @@ async Task  Startup()
         e.Cancel = true;
         tokenSource.Cancel();
     };
+
+    IStackService? stackService = serviceProvider.GetService<IStackService>();
+    IFlashcardService? flashcardService = serviceProvider.GetService<IFlashcardService>();
+    IStudySessionService? studySessionService = serviceProvider.GetService<IStudySessionService>();
+
+    if (stackService is not null && flashcardService is not null && studySessionService is not null)
+    {
+        FlashCardUI flashCardUI =
+            new FlashCardUI(stackService, flashcardService, studySessionService, tokenSource.Token);
+        await flashCardUI.Run();
+    }
 
     Log.CloseAndFlush();
 }

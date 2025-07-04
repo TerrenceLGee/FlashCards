@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using Spectre.Console;
 using Flashcards.Core.Results;
+using Flashcards.Presentation.Validation;
 
 namespace Flashcards.Presentation.Operations.Helpers;
 
@@ -33,6 +34,30 @@ public static class UIOperationHelper
     public static DateTime GetValidDateTime(string dateString, string dateFormat, CultureInfo info)
     {
         return DateTime.ParseExact(dateString, dateFormat, info);
+    }
+
+    public static string GetValidDateString(string format, CultureInfo info)
+    {
+        string dateString = GetValidInput($"Enter date in format: '{format}' ", "blue");
+
+        while (!StringValidity.IsValidDateString(dateString, format, info))
+        {
+            dateString = GetValidInput($"Enter date in format: '{format}'", "blue");
+        }
+
+        return dateString;
+    }
+
+    public static string GetValidInput(string message, string color = "yellow")
+    {
+        string validString = string.Empty;
+
+        while (!StringValidity.IsValidString(validString))
+        {
+            validString = AnsiConsole.Ask<string>($"[{color}]{message}[/]");
+        }
+
+        return validString;
     }
 
     public static void DisplayMessage(string message, string color = "red")

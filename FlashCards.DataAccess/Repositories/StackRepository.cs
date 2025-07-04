@@ -71,7 +71,7 @@ public class StackRepository : IStackRepository
 
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-        var retreivalQuery = @"SELECT FROM dbo.Stacks WHERE Id = @ID";
+        var retreivalQuery = @"SELECT FROM dbo.Stacks WHERE Id = @Id";
         
         var command = new CommandDefinition(retreivalQuery, new {Id = stackId}, cancellationToken: cancellationToken);
 
@@ -84,7 +84,7 @@ public class StackRepository : IStackRepository
 
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-        var retrievalStatement = @"SELECT Id, Name FROM dbo.Stacks WHERE Id = @Id, Name = @Name";
+        var retrievalStatement = @"SELECT * FROM dbo.Stacks";
 
         var command = new CommandDefinition(retrievalStatement, cancellationToken: cancellationToken);
 

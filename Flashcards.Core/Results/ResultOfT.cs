@@ -7,7 +7,7 @@ public class Result<T> : Result
     protected internal Result(T? value)
         : base(isSuccess: true, errorMessage: null)
     {
-        value = value;
+        Value = value;
     }
 
     protected internal Result(string errorMessage)

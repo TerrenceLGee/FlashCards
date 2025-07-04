@@ -79,6 +79,7 @@ public class DatabaseInitializer : IDatabaseInitializer
                             Id          INT IDENTITY(1,1) PRIMARY KEY, 
                             StackId     INT NOT NULL, 
                             Date        DATETIME2 NOT NULL, 
+                            TotalQuestions INT NOT NULL,
                             Score       INT NOT NULL, 
                             CONSTRAINT FK_Sessions_Stacks FOREIGN KEY (StackId) 
                             REFERENCES dbo.Stacks(Id) ON DELETE CASCADE);
