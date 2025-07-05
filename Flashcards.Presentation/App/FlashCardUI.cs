@@ -41,13 +41,13 @@ public class FlashCardUI
             switch (ShowMainMenu())
             {
                 case MainMenuOption.ManageStacks:
-                    await HandleStackMenu(stackUI, display);
+                    await HandleStackMenu(stackUI, display).ConfigureAwait(false);
                     break;
                 case MainMenuOption.ManageFlashcards:
-                    await HandleFlashcardMenu(flashcardUI, display);
+                    await HandleFlashcardMenu(flashcardUI, display).ConfigureAwait(false); ;
                     break;
                 case MainMenuOption.Study:
-                    await HandleStudySessionMenu(sessionUI, display);
+                    await HandleStudySessionMenu(sessionUI, display).ConfigureAwait(false); ;
                     break;
                 case MainMenuOption.Exit:
                     isRunning = false;
@@ -55,7 +55,6 @@ public class FlashCardUI
                 default: UIOperationHelper.DisplayMessage("Invalid input");
                     break;
             }
-            UIOperationHelper.ClearTheScreen();
         }
     }
 
@@ -68,34 +67,34 @@ public class FlashCardUI
             switch (ShowStackMenu())
             {
                 case StackMenuOption.CreateStack:
-                    await stackUI.CreateStackAsync(_token);
+                    await stackUI.CreateStackAsync(_token).ConfigureAwait(false);
                     break;
 
                 case StackMenuOption.RenameStack:
-                    await display.DisplayAllStacksAsync();
+                    await display.DisplayAllStacksAsync().ConfigureAwait(false);
 
                     int renameId = UIOperationHelper.GetValidNumber(
                         "Please enter the id for the stack that you wish to rename: ");
 
-                    if (!await InvalidStackIdMessage(renameId))
+                    if (!await InvalidStackIdMessage(renameId).ConfigureAwait(false))
                         break;
 
-                    await stackUI.RenameStackAsync(renameId, _token);
+                    await stackUI.RenameStackAsync(renameId, _token).ConfigureAwait(false);
                     break;
                 case StackMenuOption.DeleteStack:
-                    await display.DisplayAllStacksAsync();
+                    await display.DisplayAllStacksAsync().ConfigureAwait(false);
 
                     int deleteId =
                         UIOperationHelper.GetValidNumber(
                             "Please enter the id for the stack that you wish to deleted: ");
 
-                    if (!await InvalidStackIdMessage(deleteId))
+                    if (!await InvalidStackIdMessage(deleteId).ConfigureAwait(false))
                         break;
 
-                    await stackUI.DeleteStackAsync(deleteId, _token);
+                    await stackUI.DeleteStackAsync(deleteId, _token).ConfigureAwait(false);
                     break;
                 case StackMenuOption.ListAllStacks:
-                    await display.DisplayAllStacksAsync();
+                    await display.DisplayAllStacksAsync().ConfigureAwait(false);
                     break;
                 case StackMenuOption.Back:
                     isRunning = false;
@@ -112,91 +111,79 @@ public class FlashCardUI
         bool isRunning = true;
 
         int stackId;
-        int flashcardId;
+        int flashcardPosition;
 
         while (isRunning)
         {
             switch (ShowFlashcardMenu())
             {
                 case FlashcardMenuOption.AddFlashcard:
-                    await display.DisplayAllStacksAsync();
+                    await display.DisplayAllStacksAsync().ConfigureAwait(false); 
 
                     stackId =
                         UIOperationHelper.GetValidNumber(
                             "Please choose the id of the stack that you wish to create a flash card for: ");
 
-                    if (!await InvalidStackIdMessage(stackId))
+                    if (!await InvalidStackIdMessage(stackId).ConfigureAwait(false))
                         break;
 
-                    await flashcardUI.AddFlashCard(stackId, _token);
+                    await flashcardUI.AddFlashCard(stackId, _token).ConfigureAwait(false);
 
                     break;
                 case FlashcardMenuOption.EditFlashcard:
-                    await display.DisplayAllStacksAsync();
+                    await display.DisplayAllStacksAsync().ConfigureAwait(false);
                     stackId =
                         UIOperationHelper.GetValidNumber(
                             "Please choose the id of the stack that you wish to edit a flashcard in: ");
 
-                    if (!await InvalidStackIdMessage(stackId))
+                    if (!await InvalidStackIdMessage(stackId).ConfigureAwait(false))
                         break;
 
 
-                    await display.DisplayAllFlashcardsAsync(stackId);
-                    flashcardId =
+                    await display.DisplayAllFlashcardsAsync(stackId).ConfigureAwait(false);
+                    flashcardPosition =
                         UIOperationHelper.GetValidNumber(
                             "Please choose the id of the flashcard that you wish to edit: ");
 
-                    if (!await IsValidFlashcardId(flashcardId))
+                    if (!await InvalidFlashcardIdMessage(flashcardPosition).ConfigureAwait(false))
                         break;
 
-                    await flashcardUI.UpdateFlashCardAsync(flashcardId, stackId, _token);
-
-                    break;
-                case FlashcardMenuOption.DeleteFlashcard:
-                    await display.DisplayAllFlashcardsAsync();
-
-                    flashcardId =
-                        UIOperationHelper.GetValidNumber("Please enter the id of the flashcard you wish to delete");
-
-                    if (!await IsValidFlashcardId(flashcardId))
-                        break;
-
-                    await flashcardUI.DeleteFlashcardAsync(flashcardId, _token);
+                    await flashcardUI.UpdateFlashCardAsync(flashcardPosition, stackId, _token).ConfigureAwait(false);
 
                     break;
                 case FlashcardMenuOption.DeleteFlashcardByStackId:
-                    await display.DisplayAllStacksAsync();
+                    await display.DisplayAllStacksAsync().ConfigureAwait(false);
 
                     stackId =
                         UIOperationHelper.GetValidNumber(
                             "Please choose the id of the stack that you wish to delete a flashcard in: ");
 
-                    if (!await InvalidStackIdMessage(stackId))
+                    if (!await InvalidStackIdMessage(stackId).ConfigureAwait(false))
                         break;
 
-                    await display.DisplayAllFlashcardsAsync(stackId);
+                    await display.DisplayAllFlashcardsAsync(stackId).ConfigureAwait(false);
 
-                    flashcardId =
+                    flashcardPosition =
                         UIOperationHelper.GetValidNumber(
                             "Please choose the id of the flashcard that you wish to delete: ");
 
-                    if (!await IsValidFlashcardId(flashcardId))
+                    if (!await InvalidFlashcardIdMessage(flashcardPosition).ConfigureAwait(false))
                         break;
 
 
-                    await flashcardUI.DeleteFlashcardByStackIdAsync(flashcardId, stackId, _token);
+                    await flashcardUI.DeleteFlashcardByStackIdAsync(flashcardPosition, stackId, _token).ConfigureAwait(false);
 
                     break;
                 case FlashcardMenuOption.ListAllFlashcards:
-                    await display.DisplayAllStacksAsync();
+                    await display.DisplayAllStacksAsync().ConfigureAwait(false);
                     stackId =
                         UIOperationHelper.GetValidNumber(
                             "Please choose the stack id that you wish to see flashcards for: ");
 
-                    if (!await InvalidStackIdMessage(stackId))
+                    if (!await InvalidStackIdMessage(stackId).ConfigureAwait(false))
                         break;
 
-                    await display.DisplayAllFlashcardsAsync(stackId);
+                    await display.DisplayAllFlashcardsAsync(stackId).ConfigureAwait(false);
                     break;
                 case FlashcardMenuOption.Back:
                     isRunning = false;
@@ -218,24 +205,26 @@ public class FlashCardUI
             switch (ShowStudyMenu())
             {
                 case StudyMenuOption.StartStudySession:
-                    await display.DisplayAllStacksAsync();
+                    await display.DisplayAllStacksAsync().ConfigureAwait(false);
                     stackId = UIOperationHelper.GetValidNumber("Please enter the stack id for which you would like to create a study session for ");
 
-                    if (!await InvalidStackIdMessage(stackId))
+                    if (!await InvalidStackIdMessage(stackId).ConfigureAwait(false))
                         break;
+
+                    await sessionUI.StartStudySessionAsync(stackId, _flashcardService, _token).ConfigureAwait(false);
 
                     break;
                 case StudyMenuOption.ViewAllStudySessions:
-                    await display.DisplayAllStudySessionsAsync();
+                    await display.DisplayAllStudySessionsAsync().ConfigureAwait(false);
                     break;
                 case StudyMenuOption.ViewStudySessionByStackId:
-                    await display.DisplayAllStacksAsync();
+                    await display.DisplayAllStacksAsync().ConfigureAwait(false);
                     stackId =
                         UIOperationHelper.GetValidNumber(
                             "Please choose the stack id that you wish to see study sessions for: ");
-                    if (!await InvalidStackIdMessage(stackId))
+                    if (!await InvalidStackIdMessage(stackId).ConfigureAwait(false))
                         break;
-                    await display.DisplayAllStudySessionsByStackAsync(stackId);
+                    await display.DisplayAllStudySessionsByStackAsync(stackId).ConfigureAwait(false);
                     break;
                 case StudyMenuOption.Back:
                     isRunning = false;
@@ -285,7 +274,7 @@ public class FlashCardUI
 
     private async Task<bool> IsValidStackId(int stackId)
     {
-        var getStacks = await _stackService.GetAllStacksAsync(_token);
+        var getStacks = await _stackService.GetAllStacksAsync(_token).ConfigureAwait(false);
 
         if (!getStacks.IsSuccess)
         {
@@ -302,9 +291,9 @@ public class FlashCardUI
         return false;
     }
 
-    private async Task<bool> IsValidFlashcardId(int flashcardId)
+    private async Task<bool> IsValidFlashcardPosition(int flashcardPosition)
     {
-        var getFlashcards = await _flashcardService.GetAllFlashcardsAsync(_token);
+        var getFlashcards = await _flashcardService.GetAllFlashcardsAsync(_token).ConfigureAwait(false);
 
         if (!getFlashcards.IsSuccess)
         {
@@ -315,7 +304,7 @@ public class FlashCardUI
 
         if (flashcards is not null)
         {
-            return flashcards.Any(flashcard => flashcard.Id == flashcardId);
+            return flashcards.Any(flashcard => flashcard.Position == flashcardPosition);
         }
         return false;
     }
@@ -323,7 +312,7 @@ public class FlashCardUI
 
     private async Task<bool> InvalidStackIdMessage(int stackId)
     {
-        var validStackId = await IsValidStackId(stackId);
+        var validStackId = await IsValidStackId(stackId).ConfigureAwait(false);
 
         if (!validStackId)
         {
@@ -336,7 +325,7 @@ public class FlashCardUI
 
     private async Task<bool> InvalidFlashcardIdMessage(int flashcardId)
     {
-        var validFlashcardId = await IsValidFlashcardId(flashcardId);
+        var validFlashcardId = await IsValidFlashcardPosition(flashcardId).ConfigureAwait(false);
 
 
         if (!validFlashcardId)

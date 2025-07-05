@@ -20,7 +20,7 @@ public class StackUIOperations
         string name =
             UIOperationHelper.GetValidInput("Enter a name for the flashcard stack you wish to create", "green");
         
-        var created = await _stackService.CreateStackAsync(name, cancellationToken);
+        var created = await _stackService.CreateStackAsync(name, cancellationToken).ConfigureAwait(false);
         UIOperationHelper.WriteResult(created);
     }
 
@@ -30,13 +30,13 @@ public class StackUIOperations
             UIOperationHelper.GetValidInput("Please enter the new name for the flashcard stack that you wish to rename",
                 "green");
 
-        var updated = await _stackService.RenameStackAsync(id, name, _token);
+        var updated = await _stackService.RenameStackAsync(id, name, _token).ConfigureAwait(false);
         UIOperationHelper.WriteResult(updated);
     }
 
     public async Task DeleteStackAsync(int id, CancellationToken cancellationToken = default)
     {
-        var deleted = await _stackService.DeleteStackAsync(id, _token);
+        var deleted = await _stackService.DeleteStackAsync(id, _token).ConfigureAwait(false);
         UIOperationHelper.WriteResult(deleted);
     }
 }

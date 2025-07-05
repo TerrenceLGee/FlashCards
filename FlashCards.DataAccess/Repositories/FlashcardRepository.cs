@@ -2,7 +2,6 @@
 using Flashcards.Core.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Dapper;
 
 namespace FlashCards.DataAccess.Repositories;
@@ -52,22 +51,6 @@ public class FlashcardRepository : IFlashcardRepository
         return await connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
     }
 
-    public async Task<bool> DeleteFlashcardAsync(int flashcardId, CancellationToken cancellationToken = default)
-    {
-        if (flashcardId <= 0) throw new ArgumentOutOfRangeException(nameof(flashcardId));
-
-        await using var connection = new SqlConnection(_connectionString);
-
-        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-        var deleteQuery = @"DELETE FROM dbo.Flashcards WHERE Id = @Id";
-
-        var command =
-            new CommandDefinition(deleteQuery, new { Id = flashcardId }, cancellationToken: cancellationToken);
-
-        return await connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
-    }
-
     public async Task<bool> DeleteFlashcardByStackIdASync(int flashcardId, int stackId, CancellationToken cancellationToken = default)
     {
         if (flashcardId <= 0) throw new ArgumentOutOfRangeException(nameof(flashcardId));
@@ -81,7 +64,7 @@ public class FlashcardRepository : IFlashcardRepository
         var deleteQuery =
             @"DELETE FROM dbo.Flashcards WHERE Id=@Id AND StackId=@StackId";
 
-        var command = new CommandDefinition(deleteQuery, cancellationToken: cancellationToken);
+        var command = new CommandDefinition(deleteQuery, new {Id = flashcardId, StackId = stackId }, cancellationToken: cancellationToken);
 
         return await connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
     }

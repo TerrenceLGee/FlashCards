@@ -98,29 +98,6 @@ public class FlashcardService : IFlashcardService
         }
     }
 
-    public async Task<Result> DeleteFlashcardAsync(int id, CancellationToken cancellationToken)
-    {
-        if (id <= 0)
-            return Result.Fail("Flashcard id must be greater than 0");
-
-        try
-        {
-            var deleted = await _flashcardRepo.DeleteFlashcardAsync(id, cancellationToken).ConfigureAwait(false);
-
-            return deleted ? Result.Ok() : Result.Fail($"There is no flashcard with id = {id}");
-        }
-        catch (SqlException ex)
-        {
-            _logger.LogError(ex, "Database error unable to delete flashcard with id = {id}", id);
-            return Result.Fail($"Unable to delete flashcard with id = {id}, database error");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "A serious error occurred in the attempt to delete flashcard with id = {id}", id);
-            return Result.Fail($"Unable to delete flashcard with id = {id}, a serious error has occurred");
-        }
-    }
 
     public async Task<Result> DeleteFlashcardByStackIdAsync(int id, int stackId, CancellationToken cancellationToken)
     {
@@ -132,7 +109,19 @@ public class FlashcardService : IFlashcardService
 
         try
         {
-            var deleted = await _flashcardRepo.DeleteFlashcardByStackIdASync(id, stackId, cancellationToken);
+            var deleted = await _flashcardRepo.DeleteFlashcardByStackIdASync(id, stackId, cancellationToken).ConfigureAwait(false);
+
+            var flashcardsToUpdatePosition =
+                await _flashcardRepo.GetFlashcardsByStackIdAsync(stackId, cancellationToken);
+
+            foreach (var flashcard in flashcardsToUpdatePosition)
+            {
+                if (flashcard.Position >= id)
+                {
+                    --flashcard.Position;
+                    await _flashcardRepo.UpdateFlashcardAsync(flashcard, cancellationToken);
+                }
+            }
 
             return deleted ? Result.Ok() : Result.Fail($"Unable to deleted flashcard with id = {id} and stack id = {stackId}");
         }
@@ -253,7 +242,7 @@ public async Task<Result<int>> GetNextFlashcardPositionAsync(int stackId, Cancel
                 "A serious error occurred when attempting to retrieve the next position for flashcard with stack id = {StackId}",
                 stackId);
             return Result<int>.Fail(
-                $"A serious error occured cannot retrieve the next position for flashcard with stack id = {stackId}");
+                $"A serious error occurred cannot retrieve the next position for flashcard with stack id = {stackId}");
         }
     }
 }

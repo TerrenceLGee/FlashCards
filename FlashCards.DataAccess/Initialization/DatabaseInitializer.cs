@@ -28,7 +28,7 @@ public class DatabaseInitializer : IDatabaseInitializer
         {
             await using (var connection = new SqlConnection(_masterConn))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync().ConfigureAwait(false);
                 var databaseCreationStatement =
                     $@"IF DB_ID(N'{_dbName}') IS NULL 
                         CREATE DATABASE [{_dbName}];";
@@ -45,7 +45,7 @@ public class DatabaseInitializer : IDatabaseInitializer
         {
             await using (var connection = new SqlConnection(_dbConn))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync().ConfigureAwait(false); 
 
                 var createTableCommand =
                     @"IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Stacks')

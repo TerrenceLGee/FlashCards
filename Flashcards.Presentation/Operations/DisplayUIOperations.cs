@@ -79,7 +79,7 @@ public class DisplayUIOperations
         table.AddColumn("Front");
         table.AddColumn("Back");
 
-        var stackName = await GetFlashcardStackNameById(stackId);
+        var stackName = await GetFlashcardStackNameById(stackId).ConfigureAwait(false);
 
         if (stackName is not null)
         {
@@ -154,9 +154,10 @@ public class DisplayUIOperations
         var table = new Table();
         table.AddColumn("Id");
         table.AddColumn("Date");
+        table.AddColumn("Total questions");
         table.AddColumn("Score");
 
-        var stackName = await GetFlashcardStackNameById(stackId);
+        var stackName = await GetFlashcardStackNameById(stackId).ConfigureAwait(false);
         UIOperationHelper.DisplayMessage($"Study session for {stackName} stack", "underline green");
 
         foreach (var session in allStudySessionsForStack!)
@@ -164,6 +165,7 @@ public class DisplayUIOperations
             table.AddRow(
                 session.Id.ToString(),
                 session.Date.ToString("MM-dd-yyyy"),
+                session.TotalQuestions.ToString(),
                 session.Score.ToString());
         }
 
@@ -197,18 +199,20 @@ public class DisplayUIOperations
         table.AddColumn("Id");
         table.AddColumn("Date");
         table.AddColumn("Stack");
+        table.AddColumn("Total questions");
         table.AddColumn("Score");
 
         UIOperationHelper.DisplayMessage("Study Sessions", "underline green");
 
         foreach (var session in orderedSessions!)
         {
-            string? stackName = await GetFlashcardStackNameById(session.StackId);
-            
+            string? stackName = await GetFlashcardStackNameById(session.StackId).ConfigureAwait(false);
+
             table.AddRow(
                 session.Id.ToString(),
                 session.Date.ToString("MM-dd-yyyy"),
                 stackName ?? session.StackId.ToString(),
+                session.TotalQuestions.ToString(),
                 session.Score.ToString());
         }
 

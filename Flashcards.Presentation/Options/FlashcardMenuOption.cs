@@ -7,8 +7,6 @@ public enum FlashcardMenuOption
     AddFlashcard,
     [Display (Name = "Edit a flash card")]
     EditFlashcard,
-    [Display (Name = "Delete a flash card")]
-    DeleteFlashcard,
     [Display (Name = "Delete a flash card by stack id")]
     DeleteFlashcardByStackId,
     [Display (Name = "Show all flash cards")]

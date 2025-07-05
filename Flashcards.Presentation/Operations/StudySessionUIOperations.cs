@@ -25,7 +25,7 @@ public class StudySessionUIOperations
 
         
 
-        var getFlashCards = await flashcardService.GetFlashcardsByStackIdAsync(stackId, cancellationToken);
+        var getFlashCards = await flashcardService.GetFlashcardsByStackIdAsync(stackId, cancellationToken).ConfigureAwait(false);
 
         if (!getFlashCards.IsSuccess)
         {
@@ -39,13 +39,15 @@ public class StudySessionUIOperations
         string correctAnswer;
         string userAnswer;
 
-        if (flashcards is null)
+        if (flashcards is null || flashcards.Count == 0)
         {
             UIOperationHelper.DisplayMessage($"Error there are no flashcards available for stack with stack id = {stackId}");
             return;
         }
 
         totalQuestions = UIOperationHelper.GetValidNumber($"There are {flashcards.Count} flashcards available in this stack, how many would you like to study? ");
+
+        UIOperationHelper.ClearTheScreen("green");
 
         for (int i = 0; i < totalQuestions; i++)
         {
@@ -58,9 +60,21 @@ public class StudySessionUIOperations
             {
                 score++;
             }
-            totalQuestions++;
+
+            GoToNextFlashcard();
         }
 
-        var studySession = new StudySession(stackId, DateTime.Now, totalQuestions, score);
+        UIOperationHelper.DisplayMessage($"Study session completed you got {score} out {totalQuestions} correct", "blue");
+
+        var added = await _studySessionService.CreateStudySessionAsync(stackId, DateTime.Now, score, totalQuestions, _token);
+
+        UIOperationHelper.WriteResult(added);
+    }
+
+    private void GoToNextFlashcard()
+    {
+        UIOperationHelper.DisplayMessage("\nPress any key to go to the next flashcard", "blue");
+        Console.ReadKey();
+        Console.Clear();
     }
 }

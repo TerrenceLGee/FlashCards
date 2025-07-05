@@ -19,7 +19,7 @@ public class FlashcardUIOperations
     {
         string front = UIOperationHelper.GetValidInput("Please enter the front for the flashcard (the question) ");
         string back = UIOperationHelper.GetValidInput("Please enter the back for the flashcard (the answer) ");
-        var getPosition = await _flashcardService.GetNextFlashcardPositionAsync(stackId, _token);
+        var getPosition = await _flashcardService.GetNextFlashcardPositionAsync(stackId, _token).ConfigureAwait(false);
 
         if (!getPosition.IsSuccess)
         {
@@ -29,8 +29,8 @@ public class FlashcardUIOperations
 
         int position = getPosition.Value;
 
-        var added=  await _flashcardService.CreateFlashcardAsync(stackId, front, back, ++position, _token);
-        
+        var added=  await _flashcardService.CreateFlashcardAsync(stackId, front, back, ++position, _token).ConfigureAwait(false);
+
         UIOperationHelper.WriteResult(added);
     }
 
@@ -39,22 +39,42 @@ public class FlashcardUIOperations
         string front = UIOperationHelper.GetValidInput("Please enter the front for the flashcard that you wish to update (or press enter if you wish to keep the same question) ");
         string back = UIOperationHelper.GetValidInput("Please enter the back for the flashcard that you wish to update (or press enter if you wish to keep the same answer) ");
 
-        var updated = await _flashcardService.UpdateFlashcardAsync(id, stackId, front, back, _token);
+        var updated = await _flashcardService.UpdateFlashcardAsync(id, stackId, front, back, _token).ConfigureAwait(false);
 
         UIOperationHelper.WriteResult(updated);
     }
 
-    public async Task DeleteFlashcardAsync(int id, CancellationToken cancellationToken = default)
+    public async Task DeleteFlashcardByStackIdAsync(int id, int stackId, CancellationToken cancellationToken = default)
     {
-        var deleted = await _flashcardService.DeleteFlashcardAsync(id, cancellationToken);
+        var actualId = await GetValidFlashcardIdByPosition(id, stackId).ConfigureAwait(false);
+        var deleted = await _flashcardService.DeleteFlashcardByStackIdAsync(actualId, stackId, cancellationToken).ConfigureAwait(false);
 
         UIOperationHelper.WriteResult(deleted);
     }
 
-    public async Task DeleteFlashcardByStackIdAsync(int id, int stackId, CancellationToken cancellationToken = default)
+    private async Task<int> GetValidFlashcardIdByPosition(int id, int stackId)
     {
-        var deleted = await _flashcardService.DeleteFlashcardByStackIdAsync(id, stackId, cancellationToken);
-        
-        UIOperationHelper.WriteResult(deleted);
+        var actualId = -1;
+
+        var getFlashcards = await _flashcardService.GetFlashcardsByStackIdAsync(stackId, _token).ConfigureAwait(false);
+
+        if (!getFlashcards.IsSuccess)
+        {
+            UIOperationHelper.WriteResult(getFlashcards);
+            return actualId;
+        }
+
+        var allFlashcards = getFlashcards.Value;
+
+        if (allFlashcards is not null)
+        {
+            actualId = allFlashcards
+                .Where(flashcard => flashcard.Position == id)
+                .Select(flashcard => flashcard.Id)
+                .FirstOrDefault();
+                
+        }
+
+        return actualId;
     }
 }

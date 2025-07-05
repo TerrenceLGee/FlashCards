@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 
-await Startup();
+await Startup().ConfigureAwait(false); ;
 
 return;
 
@@ -53,7 +53,7 @@ async Task  Startup()
 
     if (databaseInitializer is not null)
     {
-        await databaseInitializer.InitializeDatabaseAsync();
+        await databaseInitializer.InitializeDatabaseAsync().ConfigureAwait(false);
     }
 
     using var tokenSource = new CancellationTokenSource();
@@ -72,7 +72,7 @@ async Task  Startup()
     {
         FlashCardUI flashCardUI =
             new FlashCardUI(stackService, flashcardService, studySessionService, tokenSource.Token);
-        await flashCardUI.Run();
+        await flashCardUI.Run().ConfigureAwait(false);
     }
 
     Log.CloseAndFlush();
